@@ -235,7 +235,7 @@ int priority_queue_construct ( priority_queue **const pp_priority_queue, size_t 
     }
 }
 
-int priority_queue_from_keys ( const priority_queue **const pp_priority_queue, const char **const keys, size_t size )
+int priority_queue_from_keys ( const priority_queue **const pp_priority_queue, const char **const keys, size_t size, priority_queue_equal_fn pfn_compare_function )
 {
 
     // Argument check
@@ -249,13 +249,16 @@ int priority_queue_from_keys ( const priority_queue **const pp_priority_queue, c
     priority_queue *p_priority_queue = 0;
 
     // Allocate a priority queue
-    if ( priority_queue_construct(&p_priority_queue, size, 0) == 0 ) goto failed_to_construct_priority_queue;
+    if ( priority_queue_construct(&p_priority_queue, size, pfn_compare_function) == 0 ) goto failed_to_construct_priority_queue;
 
     // Iterate over each key
     for (size_t i = 0; keys[i]; i++)
 
         // Add the key to the priority queue
         p_priority_queue->entries.data[i] = keys[i];
+
+    // Build the priority queue
+    priority_queue_build_max_heap(p_priority_queue);
 
     // Return
     *pp_priority_queue = p_priority_queue;
