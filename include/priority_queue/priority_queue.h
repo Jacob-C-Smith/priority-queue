@@ -76,6 +76,22 @@ DLLEXPORT int priority_queue_create ( priority_queue **const pp_priority_queue )
  */
 DLLEXPORT int priority_queue_construct ( priority_queue **const pp_priority_queue, size_t size, priority_queue_equal_fn pfn_compare_function );
 
+// Constructors
+/** !
+ *  Construct a priority queue with a specific number of entries
+ *
+ * @param pp_priority_queue    return
+ * @param keys                 pointer to null terminated array of keys
+ * @param size                 number of priority queue entries. 
+ * @param pfn_compare_function pointer to a compare function, or 0 for default
+ *
+ * @sa priority_queue_create
+ * @sa priority_queue_destroy
+ *
+ * @return 1 on success, 0 on error
+ */
+DLLEXPORT int priority_queue_from_keys ( const priority_queue **const pp_priority_queue, const char **const keys, size_t size, priority_queue_equal_fn pfn_compare_function );
+
 // Accessors
 /** !
  * Is the priority queue empty?
@@ -85,6 +101,27 @@ DLLEXPORT int priority_queue_construct ( priority_queue **const pp_priority_queu
  * @return 1 on success, 0 on error
  */
 DLLEXPORT bool priority_queue_empty ( priority_queue *const p_priority_queue );
+
+// Mutators
+/** !
+ * Add a key to the back of the priority queue
+ * 
+ * @param p_priority_queue the priority queue
+ * @param p_key            the key to insert
+ * 
+ * @return 1 on success, 0 on error
+*/
+DLLEXPORT int priority_queue_enqueue ( priority_queue *const p_priority_queue, void *p_key );
+
+/** !
+ * Remove the key in the front of the priority queue
+ * 
+ * @param p_priority_queue the priority queue
+ * @param pp_key           return
+ * 
+ * @return 1 on success, 0 on error
+*/
+DLLEXPORT int priority_queue_dequeue ( priority_queue *const p_priority_queue, void **pp_key );
 
 // Destructors
 /** !
