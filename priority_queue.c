@@ -91,6 +91,27 @@ int priority_queue_max ( priority_queue *const p_priority_queue, void **pp_value
  */
 int priority_queue_extract_max ( priority_queue *const p_priority_queue, void **pp_value );
 
+/** !
+ * Increase the priority of a key in the heap
+ * 
+ * @param p_priority_queue the priority queue 
+ * @param index            the index of the key to increase
+ * @param p_key            the key
+ * 
+ * @return 1 on success, 0 on error
+ */
+int priority_queue_increase_key ( priority_queue *const p_priority_queue, size_t index, void *p_key );
+
+/** !
+ * Insert an element into the max heap
+ * 
+ * @param p_priority_queue the priority queue 
+ * @param p_key            the key to be inserted into the heap
+ * 
+ * @return 1 on success, 0 on error
+ */
+int priority_queue_insert ( priority_queue *const pp_priority_queue, void *p_key );
+
 int priority_queue_create ( priority_queue **const pp_priority_queue )
 {
 
@@ -533,11 +554,221 @@ int priority_queue_extract_max ( priority_queue *const p_priority_queue, void **
     } 
 }
 
-// TODO: Increase key
-//
+int priority_queue_increase_key ( priority_queue *const p_priority_queue, size_t index, void *p_key )
+{
+    // Argument check
+    if ( p_priority_queue == (void *) 0 ) goto no_priority_queue;
 
-// TODO: Insert
-//
+    // Ensure the key is increasing priority 
+    if ( p_priority_queue->pfn_compare_function(p_key, p_priority_queue->entries.data[index]) < 0 ) goto decrease_key;
+
+    // Store the key in the heap
+    p_priority_queue->entries.data[index] = p_key;
+
+    // Increase the key in the heap to its maximum priority
+    while ( index > 0 && p_priority_queue->pfn_compare_function(p_priority_queue->entries.data[PRIORITY_QUEUE_PARENT(index)], p_priority_queue->entries.data[index]) )
+    {
+
+        // Swap the key at index with key at parent index in the heap
+        size_t tmp_idx = PRIORITY_QUEUE_PARENT(index);
+        void *tmp = p_priority_queue->entries.data[index];
+        p_priority_queue->entries.data[index] = p_priority_queue->entries.data[tmp_idx];
+        p_priority_queue->entries.data[tmp_idx] = tmp;
+
+        // Update index to the parent index;
+        index = tmp_idx;
+    }
+
+    // Success
+    return 1;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+            no_priority_queue:
+                #ifndef NDEBUG
+                    printf("[priority queue] Null pointer provided for parameter \"p_priority_queue\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // Priority queue errors
+        {
+            decrease_key:
+                #ifndef NDEBUG
+                    printf("[priority queue] Null pointer provided for parameter \"p_priority_queue\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+    }
+}
+
+int priority_queue_insert ( priority_queue *const p_priority_queue, void *p_key )
+{
+    
+    // Argument check
+    if ( p_priority_queue == (void *) 0 ) goto no_priority_queue;
+    if ( p_key            == (void *) 0 ) goto no_key;
+
+    // State check
+    if ( p_priority_queue->entries.count >= p_priority_queue->entries.max ) goto heap_overflow;
+
+    // Increment the size of the heap
+    p_priority_queue->entries.count++;
+
+    // Insert the key into the heap
+    p_priority_queue->entries.data[p_priority_queue->entries.count - 1] = p_key;
+
+    // Position the key correctly
+    if ( priority_queue_increase_key(p_priority_queue, p_priority_queue->entries.count-1, p_key) == 0 ) goto failed_to_increase_key;
+
+    // Success
+    return 1;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+            no_priority_queue:
+                #ifndef NDEBUG
+                    printf("[priority queue] Null pointer provided for parameter \"p_priority_queue\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+            
+            no_key:
+                #ifndef NDEBUG
+                    printf("[priority queue] Null pointer provided for parameter \"p_key\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // Priority queue errors
+        {
+            heap_overflow:
+                #ifndef NDEBUG
+                    printf("[priority queue] Priority queue overflow in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+
+            failed_to_increase_key:
+                #ifndef NDEBUG
+                    printf("[priority queue] Call to function \"priority_queue_increase_key\" returned an erroneous value in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+    }
+}
+
+int priority_queue_enqueue ( priority_queue *const p_priority_queue, void *p_key )
+{
+
+    // Argument check
+    if ( p_priority_queue == (void *) 0 ) goto no_priority_queue;
+    if ( p_key            == (void *) 0 ) goto no_key;
+
+    // Insert the key
+    if ( priority_queue_insert(p_priority_queue, p_key) == 0 ) goto failed_to_insert_key;
+
+    // Success
+    return 1;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+            no_priority_queue:
+                #ifndef NDEBUG
+                    printf("[priority queue] Null pointer provided for parameter \"p_priority_queue\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+            
+            no_key:
+                #ifndef NDEBUG
+                    printf("[priority queue] Null pointer provided for parameter \"p_key\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // Priority queue errors
+        {
+            failed_to_insert_key:
+                #ifndef NDEBUG
+                    printf("[priority queue] Call to function \"priority_queue_insert\" returned an erroneous value in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+    }
+}
+
+int priority_queue_dequeue ( priority_queue *const p_priority_queue, void **pp_key )
+{
+    
+    // Argument check
+    if ( p_priority_queue == (void *) 0 ) goto no_priority_queue;
+    if ( pp_key           == (void *) 0 ) goto no_key;
+
+    // Insert the key
+    if ( priority_queue_extract_max(p_priority_queue, pp_key) == 0 ) goto failed_to_extract_max_key;
+
+    // Success
+    return 1;
+
+    // Error handling
+    {
+
+        // Argument errors
+        {
+            no_priority_queue:
+                #ifndef NDEBUG
+                    printf("[priority queue] Null pointer provided for parameter \"p_priority_queue\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+            
+            no_key:
+                #ifndef NDEBUG
+                    printf("[priority queue] Null pointer provided for parameter \"p_key\" in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+
+        // Priority queue errors
+        {
+            failed_to_extract_max_key:
+                #ifndef NDEBUG
+                    printf("[priority queue] Call to function \"priority_queue_extract_max\" returned an erroneous value in call to function \"%s\"\n", __FUNCTION__);
+                #endif
+
+                // Error
+                return 0;
+        }
+    }
+}
 
 bool priority_queue_empty ( priority_queue *const p_priority_queue )
 {
