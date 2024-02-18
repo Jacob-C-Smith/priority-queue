@@ -329,6 +329,7 @@ int priority_queue_heapify ( priority_queue *const p_priority_queue, size_t i )
     // Argument check
     if ( p_priority_queue == (void *) 0 ) goto no_priority_queue;
     // TODO: Bounds check parameter i
+    // TODO: Lock
 
     // Initialized data
     size_t l = PRIORITY_QUEUE_LEFT(i);
@@ -522,7 +523,7 @@ int priority_queue_extract_max ( priority_queue *const p_priority_queue, void **
     priority_queue_heapify(p_priority_queue, 0);
 
     // Return the maximum value to the caller
-    *pp_value = p_priority_queue->entries.data[0];
+    if ( pp_value ) *pp_value = ret;
      
     // Success
     return 1;
@@ -681,8 +682,14 @@ int priority_queue_enqueue ( priority_queue *const p_priority_queue, void *p_key
     if ( p_priority_queue == (void *) 0 ) goto no_priority_queue;
     if ( p_key            == (void *) 0 ) goto no_key;
 
+    // Lock
+    mutex_lock(p_priority_queue->_lock);
+
     // Insert the key
     if ( priority_queue_insert(p_priority_queue, p_key) == 0 ) goto failed_to_insert_key;
+
+    // Unlock
+    mutex_unlock(p_priority_queue->_lock);
 
     // Success
     return 1;
@@ -729,8 +736,14 @@ int priority_queue_dequeue ( priority_queue *const p_priority_queue, void **pp_k
     if ( p_priority_queue == (void *) 0 ) goto no_priority_queue;
     if ( pp_key           == (void *) 0 ) goto no_key;
 
+    // Lock
+    mutex_lock(p_priority_queue->_lock);
+
     // Insert the key
     if ( priority_queue_extract_max(p_priority_queue, pp_key) == 0 ) goto failed_to_extract_max_key;
+
+    // Unlock
+    mutex_unlock(p_priority_queue->_lock);
 
     // Success
     return 1;
@@ -776,8 +789,17 @@ bool priority_queue_empty ( priority_queue *const p_priority_queue )
     // Argument check
     if ( p_priority_queue == (void *) 0 ) goto no_priority_queue;
 
+    // Lock
+    mutex_lock(p_priority_queue->_lock);
+
+    // Initialized data
+    bool ret = ( p_priority_queue->entries.count == 0 );
+
+    // Unlock
+    mutex_unlock(p_priority_queue->_lock);
+
     // Success
-    return ( p_priority_queue->entries.count == 0 );
+    return ret;
 
     // Error handling
     {
