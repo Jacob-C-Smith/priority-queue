@@ -1,4 +1,4 @@
-name: priority-queue
+name: priority queue
 
 on:
   push:
